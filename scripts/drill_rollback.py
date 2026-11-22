@@ -180,6 +180,7 @@ class Recorder:
         self.alert_fired_at: datetime | None = None
         self.smoke_results: list[dict] = []
         self.failure_log: str = ""
+        self.final_state: dict = {}
 
     def add(self, name: str, title: str, phase: str) -> Step:
         step = Step(name=name, title=title, phase=phase)
@@ -371,15 +372,37 @@ def latest_alert(path: Path) -> dict | None:
     return None
 
 
-def tail_logs(cfg: Config, runner: Runner, lines: int = 40) -> str:
+SERVICE_BY_STEP = {
+    "clean_redis": "redis",
+    "restore_frontend": "web",
+}
+
+
+def tail_logs(cfg: Config, runner: Runner, failed_step: str = "", lines: int = 40) -> str:
+    """Tail the container that the failed step actually touched (api by default)."""
+    service = SERVICE_BY_STEP.get(failed_step) or os.environ.get("LOG_SERVICE") or cfg.api_service
     if runner.dry_run:
         return "(dry-run: no logs)"
     proc = subprocess.run(
-        compose(cfg, "logs", "--no-color", "--tail", str(lines), cfg.api_service),
+        compose(cfg, "logs", "--no-color", "--tail", str(lines), service),
         capture_output=True,
         text=True,
     )
-    return (proc.stdout or proc.stderr or "").strip()
+    body = (proc.stdout or proc.stderr or "").strip()
+    return f"[service: {service}]\n{body}" if body else f"[service: {service}] (no log lines)"
+
+
+def collect_final_state(cfg: Config, runner: Runner) -> dict:
+    """Read-only end-state probe: API version, health, served frontend, leftover keys."""
+    api_code, api_body, _ = http_json(f"{cfg.api_base_url}/api/version")
+    health_code, _, _ = http_json(f"{cfg.api_base_url}/health")
+    web_code, web_body = http_text(f"{cfg.web_base_url}/version.txt")
+    return {
+        "api_version": str(api_body.get("version")) if api_code == 200 else f"HTTP {api_code}",
+        "api_health": "200" if health_code == 200 else f"HTTP {health_code}",
+        "frontend_version": web_body.strip() if web_code == 200 else f"HTTP {web_code}",
+        "redis_keys": str(len(redis_keys(cfg, runner))),
+    }
 
 
 def step_switch_image_tag(cfg: Config, runner: Runner, step: Step) -> None:
@@ -393,11 +416,13 @@ def step_switch_image_tag(cfg: Config, runner: Runner, step: Step) -> None:
     rc = runner.run(inspect_argv)
     if not runner.dry_run and not rc.out.strip():
         raise StepFailure(f"previous image not available locally: {image_ref}")
+    image_id = rc.out.strip()[:12]
     up_argv = compose(cfg, "up", "-d", "--no-deps", "--pull", "never", cfg.api_service)
     step.commands.append(" ".join(up_argv) + f"   (API_TAG={cfg.good_tag})")
     runner.run(up_argv, extra_env={"API_TAG": cfg.good_tag})
     if not runner.dry_run and not wait_api_version(cfg, cfg.good_tag, timeout=180):
         raise StepFailure(f"api did not report version {cfg.good_tag} within 180s")
+    step.detail = f"image {image_ref} id={image_id}, /api/version 已是 {cfg.good_tag}"
 
 
 def step_rolling_restart(cfg: Config, runner: Runner, step: Step) -> None:
@@ -410,6 +435,7 @@ def step_rolling_restart(cfg: Config, runner: Runner, step: Step) -> None:
     runner.run(argv, extra_env={"API_TAG": cfg.good_tag})
     if not runner.dry_run and not wait_health_ok(cfg, timeout=180):
         raise StepFailure("api did not become healthy after rolling restart")
+    step.detail = "recreated with --wait; /health 已恢复 200"
 
 
 def step_restore_frontend(cfg: Config, runner: Runner, step: Step) -> None:
@@ -451,6 +477,7 @@ def step_restore_frontend(cfg: Config, runner: Runner, step: Step) -> None:
     if not wait_until(serving, timeout=60, interval=1.0):
         code, body = http_text(f"{cfg.web_base_url}/version.txt", timeout=3)
         raise StepFailure(f"frontend served {body.strip()!r} (HTTP {code}) after 60s, expected {expected!r}")
+    step.detail = f"frontend 静态包已切回 {expected}（本地与 HTTP 双向校验）"
 
 
 def redis_keys(cfg: Config, runner: Runner) -> list[str]:
@@ -571,7 +598,33 @@ def render_report(cfg: Config, rec: Recorder, *, exit_code: int, dry_run: bool,
     else:
         out.append("（本次未执行冒烟用例）")
     out.append("")
-    out.append("## 6. 失败定位")
+    out.append("## 6. 回滚后终态核对")
+    out.append("")
+    if rec.final_state:
+        out.append("| 项 | 实测 | 期望 | 结论 |")
+        out.append("|---|---|---|---|")
+        expect = {
+            "api_version": cfg.good_tag,
+            "api_health": "200",
+            "frontend_version": Path(cfg.frontend_release).name,
+        }
+        labels = {
+            "api_version": "API 版本 /api/version",
+            "api_health": "/health 状态码",
+            "frontend_version": "前端静态包版本 /version.txt",
+        }
+        for key, want in expect.items():
+            got = rec.final_state.get(key, "-")
+            out.append(f"| {labels[key]} | {got} | {want} | {'PASS' if got == want else 'FAIL'} |")
+        # cache is re-warmed by the smoke suite on purpose: informational only
+        out.append(
+            f"| 缓存键数量（冒烟后） | {rec.final_state.get('redis_keys', '-')} | 参考值 | "
+            "清空动作本身已在第 3 节第 4 步复查为 0，此处回填属正常 |"
+        )
+    else:
+        out.append("（fail-fast，未走到终态核对）")
+    out.append("")
+    out.append("## 7. 失败定位")
     out.append("")
     if failed:
         for step in failed:
@@ -587,7 +640,7 @@ def render_report(cfg: Config, rec: Recorder, *, exit_code: int, dry_run: bool,
     else:
         out.append("无失败步骤。")
     out.append("")
-    out.append("## 7. 执行过的命令（逐步）")
+    out.append("## 8. 执行过的命令（逐步）")
     out.append("")
     for step in rec.steps:
         if not step.commands:
@@ -596,7 +649,7 @@ def render_report(cfg: Config, rec: Recorder, *, exit_code: int, dry_run: bool,
         for command in step.commands:
             out.append(f"  - `{command}`")
     out.append("")
-    out.append("## 8. 验收标准对照")
+    out.append("## 9. 验收标准对照")
     out.append("")
     out.append("| AC | 判据 | 本次结果 |")
     out.append("|---|---|---|")
@@ -606,12 +659,13 @@ def render_report(cfg: Config, rec: Recorder, *, exit_code: int, dry_run: bool,
     out.append(
         "| 3 | 某步失败即停、退出码非 0、报告标出失败步骤 | "
         + (f"PASS（退出码 {exit_code}，失败步骤 {failed[0].name}，本报告即证据）" if failed
-           else "本次未注入失败；fail-fast 由 `./run_drill.sh --force-fail <step>` 演示")
+           else "本次未注入失败；fail-fast 证据见 `reports/drill_forced_failure_*.md`"
+                "（`--force-fail clean_redis` 退出码 1、失败步骤与日志已标出）")
         + " |"
     )
     out.append(
         "| 4 | --dry-run 只打印命令，不改容器状态 | "
-        "PASS（`bash scripts/prove_dry_run.sh` 采集 before/after `docker ps`，"
+        "PASS（`scripts/prove_dry_run.sh` 采集 before/after `docker inspect`，"
         "结果见 `reports/dry_run_docker_ps_diff.txt`） |"
     )
     out.append("| 5 | 脚本无硬编码地址/账号/密钥 | PASS（全部来自环境变量，敏感值已打码） |")
@@ -727,7 +781,7 @@ def main(argv: list[str] | None = None) -> int:
             rec.alert_fired_at = fired_at
             status = event.get("status")
             probe = f"HTTP {status}" if status else "连接失败（API 未应答）"
-            deploy.detail = f"告警触发 {event.get('fired_at')}（{probe}）"
+            deploy.detail = f"告警触发 {fmt_time(fired_at)}（本地时间；原始 {event.get('fired_at')}，{probe}）"
 
         run_step(baseline, do_baseline)
         run_step(deploy, do_deploy)
@@ -736,11 +790,14 @@ def main(argv: list[str] | None = None) -> int:
         run_step(steps["restore_frontend"], lambda: step_restore_frontend(cfg, runner, steps["restore_frontend"]))
         run_step(steps["clean_redis"], lambda: step_clean_redis(cfg, runner, steps["clean_redis"]))
         run_step(steps["smoke_suite"], lambda: step_smoke_suite(cfg, runner, steps["smoke_suite"], rec))
+        if not runner.dry_run:
+            rec.final_state = collect_final_state(cfg, runner)
     except StepFailure as exc:
         exit_code = 1
         print(f"[drill] FAILED: {exc}", file=sys.stderr)
         if not runner.dry_run:
-            rec.failure_log = tail_logs(cfg, runner)
+            failed_name = next((s.name for s in rec.steps if s.status == "failed"), "")
+            rec.failure_log = tail_logs(cfg, runner, failed_name)
     else:
         totals = rec.totals()
         if not runner.dry_run and totals["total"] > cfg.max_rollback_seconds:

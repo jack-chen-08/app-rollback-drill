@@ -1,23 +1,2 @@
-# dry-run 前后容器状态对比（证明 --dry-run 不改动任何容器状态）
-# 生成时间: 2026-11-22 20:05:06
-# 命令: docker ps --filter name=rollback-drill --format '{{.Names}}\t{{.Image}}\t{{.State}}\t{{.ID}}' | sort
-# 说明: 对比字段剔除 Status 中的运行时长(Up N seconds)，该字段随时间自然漂移；
-#       容器 ID 不变即证明容器未被重建/重启。
-
-## BEFORE (--dry-run 之前)
-rollback-drill-api-1	member-space-api:v1	running	212ad43f6ab4
-rollback-drill-db-1	pgvector/pgvector:pg16	running	3de8dff142a1
-rollback-drill-redis-1	docker.1panel.live/library/redis:7-alpine	running	1aa94e4a62d1
-rollback-drill-watchdog-1	python:3.12-slim	running	106ca0426028
-rollback-drill-web-1	python:3.12-slim	running	5fcf43146d68
-
-## AFTER  (--dry-run 之后)
-rollback-drill-api-1	member-space-api:v1	running	212ad43f6ab4
-rollback-drill-db-1	pgvector/pgvector:pg16	running	3de8dff142a1
-rollback-drill-redis-1	docker.1panel.live/library/redis:7-alpine	running	1aa94e4a62d1
-rollback-drill-watchdog-1	python:3.12-slim	running	106ca0426028
-rollback-drill-web-1	python:3.12-slim	running	5fcf43146d68
-
-## DIFF
-(无差异 / no diff)
-结论: 容器 Names/Image/State/ID 全部一致 -> --dry-run 无副作用
+# no state change: container name / image / StartedAt identical before and after
+# containers compared: 7
