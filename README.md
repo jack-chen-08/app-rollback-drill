@@ -141,3 +141,7 @@ bash scripts/prove_dry_run.sh                     # diff 末行 (无差异 / no 
 ```
 
 > 说明：`clean_redis` 之后紧接着跑冒烟，`/api/kb/search` 会重新写回 1 个 `member-space:kb:*` 缓存键。这是**预期行为**（缓存被正常重建），不是清理不干净——判断清理是否生效看的是「DEL 之后立刻 re-scan = 0 键」，报告里已记录该复查值。
+
+## 许可
+
+MIT，见 `LICENSE`。可自由使用、修改、再分发，保留版权声明即可。
