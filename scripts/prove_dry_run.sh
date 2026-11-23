@@ -50,12 +50,19 @@ fingerprint > reports/dry_run_fingerprint_after.txt
 before_lines=$(wc -l < reports/dry_run_fingerprint_before.txt)
 after_lines=$(wc -l < reports/dry_run_fingerprint_after.txt)
 
-if diff -u reports/dry_run_fingerprint_before.txt reports/dry_run_fingerprint_after.txt \
-    > reports/dry_run_diff.txt; then
-  diff_state="identical"
-else
-  diff_state="changed"
-fi
+{
+  echo "# 比对对象 reports/dry_run_fingerprint_before.txt  vs  reports/dry_run_fingerprint_after.txt"
+  echo "# 比对字段 Id / Name / Image / State.StartedAt（Status 列见原始 docker ps 文件，不参与比对）"
+  echo "# 容器数 before=${before_lines} after=${after_lines}"
+  echo "# 生成 $(date -u +%FT%TZ) by scripts/prove_dry_run.sh"
+  echo
+  if diff -u reports/dry_run_fingerprint_before.txt reports/dry_run_fingerprint_after.txt; then
+    diff_state="identical"
+    echo "无差异 / no difference：前后指纹逐字节一致，没有任何容器被重建或重启。"
+  else
+    diff_state="changed"
+  fi
+} > reports/dry_run_diff.txt
 
 {
   echo "dry_run_exit=${dry_rc}"

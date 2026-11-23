@@ -1,0 +1,6 @@
+# 比对对象 reports/dry_run_fingerprint_before.txt  vs  reports/dry_run_fingerprint_after.txt
+# 比对字段 Id / Name / Image / State.StartedAt（Status 列见原始 docker ps 文件，不参与比对）
+# 容器数 before=7 after=7
+# 生成 2026-11-23T21:09:55Z by scripts/prove_dry_run.sh
+
+无差异 / no difference：前后指纹逐字节一致，没有任何容器被重建或重启。

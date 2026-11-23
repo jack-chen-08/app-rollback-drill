@@ -153,9 +153,12 @@ class TestReport(EnvCase):
 class TestRunner(EnvCase):
     def test_dry_run_prints_without_executing(self):
         runner = drill.Runner(dry_run=True)
-        rc = runner.run(["sh", "-c", "echo should-not-run"])
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            rc = runner.run(["sh", "-c", "echo should-not-run"])
         self.assertEqual(rc.code, 0)
-        self.assertEqual(rc.out, "")
+        self.assertEqual(rc.out, "")                                    # nothing executed
+        self.assertIn("should-not-run", buf.getvalue())                 # but it was printed
 
     def test_dry_run_shows_env_driven_version_switch(self):
         """Rework round 1, item 2: the printed line must show API_TAG=v2."""

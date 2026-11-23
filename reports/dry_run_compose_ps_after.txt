@@ -1,6 +1,6 @@
-NAME                        IMAGE                                       COMMAND                  SERVICE    CREATED          STATUS                    PORTS
-rollback-drill-api-1        member-space-api:v1                         "uvicorn service:app…"   api        21 seconds ago   Up 20 seconds (healthy)   0.0.0.0:18080->8000/tcp, [::]:18080->8000/tcp
-rollback-drill-db-1         pgvector/pgvector:pg16                      "docker-entrypoint.s…"   db         42 seconds ago   Up 41 seconds (healthy)   5432/tcp
-rollback-drill-redis-1      docker.1panel.live/library/redis:7-alpine   "docker-entrypoint.s…"   redis      42 seconds ago   Up 41 seconds (healthy)   6379/tcp
-rollback-drill-watchdog-1   python:3.12-slim                            "python /opt/watchdo…"   watchdog   42 seconds ago   Up 37 seconds             
-rollback-drill-web-1        python:3.12-slim                            "python -m http.serv…"   web        42 seconds ago   Up 5 seconds (healthy)    0.0.0.0:18081->8080/tcp, [::]:18081->8080/tcp
+NAME                        IMAGE                                       COMMAND                  SERVICE    CREATED         STATUS                   PORTS
+rollback-drill-api-1        member-space-api:v1                         "uvicorn service:app…"   api        6 minutes ago   Up 6 minutes (healthy)   0.0.0.0:18080->8000/tcp, [::]:18080->8000/tcp
+rollback-drill-db-1         pgvector/pgvector:pg16                      "docker-entrypoint.s…"   db         7 minutes ago   Up 7 minutes (healthy)   5432/tcp
+rollback-drill-redis-1      docker.1panel.live/library/redis:7-alpine   "docker-entrypoint.s…"   redis      7 minutes ago   Up 7 minutes (healthy)   6379/tcp
+rollback-drill-watchdog-1   python:3.12-slim                            "python /opt/watchdo…"   watchdog   7 minutes ago   Up 7 minutes             
+rollback-drill-web-1        python:3.12-slim                            "python -m http.serv…"   web        7 minutes ago   Up 6 minutes (healthy)   0.0.0.0:18081->8080/tcp, [::]:18081->8080/tcp
