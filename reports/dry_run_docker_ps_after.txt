@@ -1,0 +1,12 @@
+CONTAINER ID   NAMES                       IMAGE                                           STATUS
+571a7c53be42   rollback-drill-api-1        member-space-api:v1                             Up 20 seconds (healthy)
+5d83cc79ab79   rollback-drill-watchdog-1   python:3.12-slim                                Up 37 seconds
+d8147ffc0ab1   rollback-drill-redis-1      docker.1panel.live/library/redis:7-alpine       Up 41 seconds (healthy)
+2af4f7db658a   rollback-drill-web-1        python:3.12-slim                                Up 5 seconds (healthy)
+c98c9f8c6901   rollback-drill-db-1         pgvector/pgvector:pg16                          Up 41 seconds (healthy)
+7f58e9b7b89e   smoke-pg                    docker.1panel.live/library/postgres:16-alpine   Up 2 hours (healthy)
+3af6251d36e8   great_curran                ad10ca536106                                    Exited (1) 4 hours ago
+cf1036c64180   cm2364-pg                   pgvector/pgvector:pg16                          Up 14 minutes (healthy)
+f7181b73c620   ch2461-pg                   pgvector/pgvector:pg16                          Exited (0) 9 hours ago
+6628d8193a48   2485_resource_graph-poc-1   de9bfd9b32f0                                    Exited (0) 3 days ago
+1abe5322feef   2485_resource_graph-db-1    pgvector/pgvector:pg16                          Exited (0) 9 hours ago

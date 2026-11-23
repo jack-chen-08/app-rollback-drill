@@ -1,7 +1,6 @@
 .env
-reports/
+build/
 __pycache__/
 *.pyc
-.DS_Store
-*.log.tmp
-EVIDENCE_run1_*
+run/alerts/
+frontend/current

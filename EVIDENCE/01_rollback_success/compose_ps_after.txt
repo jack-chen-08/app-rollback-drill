@@ -1,4 +1,0 @@
-NAME                            IMAGE                                           COMMAND                  SERVICE    CREATED          STATUS                    PORTS
-member-space-drill-api-1        member-space-drill/app:0.2.0                    "sh -c 'exec uvicorn…"   api        3 seconds ago    Up 2 seconds              8000/tcp
-member-space-drill-nginx-1      docker.1panel.live/library/nginx:1.27-alpine    "/docker-entrypoint.…"   nginx      32 minutes ago   Up 32 minutes             80/tcp, 0.0.0.0:18080->8080/tcp, [::]:18080->8080/tcp
-member-space-drill-postgres-1   docker.1panel.live/library/postgres:16-alpine   "docker-entrypoint.s…"   postgres   32 minutes ago   Up 32 minutes (healthy)   5432/tcp
