@@ -1,6 +1,0 @@
-fastapi>=0.115,<0.117
-uvicorn[standard]>=0.30,<0.35
-sqlalchemy>=2.0,<2.1
-psycopg[binary]>=3.2,<3.3
-pgvector>=0.3,<0.4
-redis>=5.0,<6.0

@@ -1,0 +1,8 @@
+ Container member-space-drill-postgres-1  Running
+ Container member-space-drill-api-1  Running
+ Container member-space-drill-nginx-1  Running
+ Container member-space-drill-postgres-1  Waiting
+ Container member-space-drill-postgres-1  Healthy
+==> 等待 http://127.0.0.1:18080/version 就绪 ...
+==> 就绪：{"service":"member-space-api","image_version":"1.0.0","runtime_label":"drill-a","health_path":"/health"}
+up_demo_env rc=0

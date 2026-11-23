@@ -1,0 +1,13 @@
+# 硬编码扫描（严格版）
+# A 类（阻断）扫描文件：drill/app/Dockerfile drill/app/main.py drill/docker-compose.yml drill/nginx/templates/default.conf.template scripts/build_images.sh scripts/reset_to_current.sh scripts/rollback_drill.py scripts/run_evidence.sh scripts/up_demo_env.sh
+# 规则：(https?://[A-Za-z0-9._:-]+|([0-9]{1,3}\.){3}[0-9]{1,3}|://[^ /]+:[^ /]+@|(password|passwd|secret|api[_-]?key|access[_-]?key|token)[[:space:]]*=[[:space:]]*[^[:space:]$]+)
+
+ALLOWED  drill/app/main.py:50:             password=DB_PASSWORD,   右侧是环境变量名引用
+
+## B 类：示例配置文件（允许出现地址 / 虚拟口令，仅列出供核对）
+CONFIG   .env.example:19:APP_BIND_HOST=0.0.0.0
+CONFIG   .env.example:23:DRILL_API_BASE_URL=http://127.0.0.1:18080
+
+## 统计：A 类命中 0 条（环境变量注入 1 条已排除）；B 类仅列示不阻断
+## 判定：PASS —— 代码与编排里没有写死的地址 / 账号 / 密钥
+## 所有可变项均由 os.environ / ${VAR} 注入；唯一配置面是 .env.example（不入库的 .env 由其派生）

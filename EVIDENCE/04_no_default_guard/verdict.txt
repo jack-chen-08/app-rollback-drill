@@ -1,0 +1,4 @@
+镜像：member-space-drill/app:1.0.0
+命令：docker run --rm --network none --entrypoint sh -e APP_BIND_HOST= <img> -c 'exec uvicorn ... --host "${APP_BIND_HOST:?}" ...'
+退出码=2（非 0 即符合预期：缺地址时拒绝启动）
+判定：PASS —— 缺 APP_BIND_HOST 时启动被拒绝，报错点名该变量，没有静默使用内置默认地址

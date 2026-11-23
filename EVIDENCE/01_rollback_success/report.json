@@ -1,0 +1,303 @@
+{
+  "report_version": 1,
+  "drill": {
+    "name": "会员空间平台 · 应用回滚演练",
+    "mode": "real",
+    "status": "succeeded",
+    "started_at": "2026-11-24T01:16:27.276+08:00",
+    "finished_at": "2026-11-24T01:16:31.350+08:00",
+    "total_duration_seconds": 4.075,
+    "total_duration_human": "4.07 秒",
+    "sla_limit_seconds": 900.0,
+    "sla_met": true,
+    "failed_step": null,
+    "failure_reason": "",
+    "fail_injection": null,
+    "exit_code": 0
+  },
+  "environment": {
+    "compose_project": "member-space-drill",
+    "compose_file": "drill/docker-compose.yml",
+    "api_base_url": "http://127.0.0.1:18080",
+    "health_path": "/health",
+    "version_path": "/version",
+    "image_repo": "member-space-drill/app",
+    "from_tag": "1.0.0",
+    "to_tag": "0.2.0",
+    "platform": "Linux 6.6.87.2-microsoft-standard-WSL2",
+    "python": "3.14.4"
+  },
+  "versions": {
+    "before": {
+      "service": "member-space-api",
+      "image_version": "1.0.0",
+      "runtime_label": "drill-a",
+      "health_path": "/health"
+    },
+    "after": {
+      "service": "member-space-api",
+      "image_version": "0.2.0",
+      "runtime_label": "drill-a",
+      "health_path": "/health"
+    },
+    "rendered_image": "member-space-drill/app:0.2.0"
+  },
+  "steps": [
+    {
+      "step": "preflight",
+      "title": "预检（环境变量 / 镜像标签 / compose 解析）",
+      "started_at": "2026-11-24T01:16:27.276+08:00",
+      "ended_at": "2026-11-24T01:16:27.536+08:00",
+      "duration_seconds": 0.259,
+      "status": "ok",
+      "detail": "环境变量齐备；镜像 member-space-drill/app:1.0.0 与 member-space-drill/app:0.2.0 均存在；compose 解析通过；故障注入=未启用",
+      "error": "",
+      "commands": [
+        "docker version --format '{{.Server.Version}}'",
+        "docker image inspect member-space-drill/app:1.0.0",
+        "docker image inspect member-space-drill/app:0.2.0",
+        "APP_IMAGE=member-space-drill/app:1.0.0 APP_IMAGE_TAG=1.0.0 docker compose -f app-rollback-drill/drill/docker-compose.yml --env-file app-rollback-drill/.env --project-name member-space-drill config -q"
+      ]
+    },
+    {
+      "step": "snapshot_before",
+      "title": "记录回滚前状态（docker ps / compose ps / version）",
+      "started_at": "2026-11-24T01:16:27.536+08:00",
+      "ended_at": "2026-11-24T01:16:27.902+08:00",
+      "duration_seconds": 0.367,
+      "status": "ok",
+      "detail": "回滚前版本 image_version=1.0.0 runtime_label=drill-a；主机可见容器 14 个",
+      "error": "",
+      "commands": [
+        "docker version --format '{{.Server.Version}}'",
+        "docker image inspect member-space-drill/app:1.0.0",
+        "docker image inspect member-space-drill/app:0.2.0",
+        "APP_IMAGE=member-space-drill/app:1.0.0 APP_IMAGE_TAG=1.0.0 docker compose -f app-rollback-drill/drill/docker-compose.yml --env-file app-rollback-drill/.env --project-name member-space-drill config -q",
+        "docker compose -f app-rollback-drill/drill/docker-compose.yml --env-file app-rollback-drill/.env --project-name member-space-drill ps -a",
+        "docker ps -a --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}'",
+        "docker ps -a --format '{{.Names}}\t{{.Image}}\t{{.Status}}'"
+      ]
+    },
+    {
+      "step": "switch_version",
+      "title": "切镜像版本（渲染并校验目标镜像引用）",
+      "started_at": "2026-11-24T01:16:27.903+08:00",
+      "ended_at": "2026-11-24T01:16:28.003+08:00",
+      "duration_seconds": 0.101,
+      "status": "ok",
+      "detail": "目标镜像引用已确认为 member-space-drill/app:0.2.0",
+      "error": "",
+      "commands": [
+        "docker version --format '{{.Server.Version}}'",
+        "docker image inspect member-space-drill/app:1.0.0",
+        "docker image inspect member-space-drill/app:0.2.0",
+        "APP_IMAGE=member-space-drill/app:1.0.0 APP_IMAGE_TAG=1.0.0 docker compose -f app-rollback-drill/drill/docker-compose.yml --env-file app-rollback-drill/.env --project-name member-space-drill config -q",
+        "docker compose -f app-rollback-drill/drill/docker-compose.yml --env-file app-rollback-drill/.env --project-name member-space-drill ps -a",
+        "docker ps -a --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}'",
+        "docker ps -a --format '{{.Names}}\t{{.Image}}\t{{.Status}}'",
+        "APP_IMAGE=member-space-drill/app:0.2.0 APP_IMAGE_TAG=0.2.0 docker compose -f app-rollback-drill/drill/docker-compose.yml --env-file app-rollback-drill/.env --project-name member-space-drill config --format json"
+      ]
+    },
+    {
+      "step": "compose_up",
+      "title": "应用变更（docker compose up -d）",
+      "started_at": "2026-11-24T01:16:28.003+08:00",
+      "ended_at": "2026-11-24T01:16:28.972+08:00",
+      "duration_seconds": 0.969,
+      "status": "ok",
+      "detail": "已应用镜像 0.2.0，容器动作: Container member-space-drill-api-1  Recreate; Container member-space-drill-api-1  Recreated; Container member-space-drill-api-1  Starting; Container member-space-drill-api-1  Started",
+      "error": "",
+      "commands": [
+        "docker version --format '{{.Server.Version}}'",
+        "docker image inspect member-space-drill/app:1.0.0",
+        "docker image inspect member-space-drill/app:0.2.0",
+        "APP_IMAGE=member-space-drill/app:1.0.0 APP_IMAGE_TAG=1.0.0 docker compose -f app-rollback-drill/drill/docker-compose.yml --env-file app-rollback-drill/.env --project-name member-space-drill config -q",
+        "docker compose -f app-rollback-drill/drill/docker-compose.yml --env-file app-rollback-drill/.env --project-name member-space-drill ps -a",
+        "docker ps -a --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}'",
+        "docker ps -a --format '{{.Names}}\t{{.Image}}\t{{.Status}}'",
+        "APP_IMAGE=member-space-drill/app:0.2.0 APP_IMAGE_TAG=0.2.0 docker compose -f app-rollback-drill/drill/docker-compose.yml --env-file app-rollback-drill/.env --project-name member-space-drill config --format json",
+        "APP_IMAGE=member-space-drill/app:0.2.0 APP_IMAGE_TAG=0.2.0 docker compose -f app-rollback-drill/drill/docker-compose.yml --env-file app-rollback-drill/.env --project-name member-space-drill up -d --no-deps api"
+      ]
+    },
+    {
+      "step": "health_check",
+      "title": "健康检查轮询（/health）",
+      "started_at": "2026-11-24T01:16:28.972+08:00",
+      "ended_at": "2026-11-24T01:16:31.002+08:00",
+      "duration_seconds": 2.03,
+      "status": "ok",
+      "detail": "健康检查通过，共轮询 2 次",
+      "error": "",
+      "commands": [
+        "docker version --format '{{.Server.Version}}'",
+        "docker image inspect member-space-drill/app:1.0.0",
+        "docker image inspect member-space-drill/app:0.2.0",
+        "APP_IMAGE=member-space-drill/app:1.0.0 APP_IMAGE_TAG=1.0.0 docker compose -f app-rollback-drill/drill/docker-compose.yml --env-file app-rollback-drill/.env --project-name member-space-drill config -q",
+        "docker compose -f app-rollback-drill/drill/docker-compose.yml --env-file app-rollback-drill/.env --project-name member-space-drill ps -a",
+        "docker ps -a --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}'",
+        "docker ps -a --format '{{.Names}}\t{{.Image}}\t{{.Status}}'",
+        "APP_IMAGE=member-space-drill/app:0.2.0 APP_IMAGE_TAG=0.2.0 docker compose -f app-rollback-drill/drill/docker-compose.yml --env-file app-rollback-drill/.env --project-name member-space-drill config --format json",
+        "APP_IMAGE=member-space-drill/app:0.2.0 APP_IMAGE_TAG=0.2.0 docker compose -f app-rollback-drill/drill/docker-compose.yml --env-file app-rollback-drill/.env --project-name member-space-drill up -d --no-deps api"
+      ]
+    },
+    {
+      "step": "verify_version",
+      "title": "校验版本（/version 应为回滚目标）",
+      "started_at": "2026-11-24T01:16:31.002+08:00",
+      "ended_at": "2026-11-24T01:16:31.005+08:00",
+      "duration_seconds": 0.003,
+      "status": "ok",
+      "detail": "版本已由 1.0.0 变为 0.2.0，回滚生效",
+      "error": "",
+      "commands": [
+        "docker version --format '{{.Server.Version}}'",
+        "docker image inspect member-space-drill/app:1.0.0",
+        "docker image inspect member-space-drill/app:0.2.0",
+        "APP_IMAGE=member-space-drill/app:1.0.0 APP_IMAGE_TAG=1.0.0 docker compose -f app-rollback-drill/drill/docker-compose.yml --env-file app-rollback-drill/.env --project-name member-space-drill config -q",
+        "docker compose -f app-rollback-drill/drill/docker-compose.yml --env-file app-rollback-drill/.env --project-name member-space-drill ps -a",
+        "docker ps -a --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}'",
+        "docker ps -a --format '{{.Names}}\t{{.Image}}\t{{.Status}}'",
+        "APP_IMAGE=member-space-drill/app:0.2.0 APP_IMAGE_TAG=0.2.0 docker compose -f app-rollback-drill/drill/docker-compose.yml --env-file app-rollback-drill/.env --project-name member-space-drill config --format json",
+        "APP_IMAGE=member-space-drill/app:0.2.0 APP_IMAGE_TAG=0.2.0 docker compose -f app-rollback-drill/drill/docker-compose.yml --env-file app-rollback-drill/.env --project-name member-space-drill up -d --no-deps api"
+      ]
+    },
+    {
+      "step": "snapshot_after",
+      "title": "记录回滚后状态（docker ps / compose ps / version）",
+      "started_at": "2026-11-24T01:16:31.005+08:00",
+      "ended_at": "2026-11-24T01:16:31.350+08:00",
+      "duration_seconds": 0.345,
+      "status": "ok",
+      "detail": "已记录回滚后状态；主机可见容器 14 个",
+      "error": "",
+      "commands": [
+        "docker version --format '{{.Server.Version}}'",
+        "docker image inspect member-space-drill/app:1.0.0",
+        "docker image inspect member-space-drill/app:0.2.0",
+        "APP_IMAGE=member-space-drill/app:1.0.0 APP_IMAGE_TAG=1.0.0 docker compose -f app-rollback-drill/drill/docker-compose.yml --env-file app-rollback-drill/.env --project-name member-space-drill config -q",
+        "docker compose -f app-rollback-drill/drill/docker-compose.yml --env-file app-rollback-drill/.env --project-name member-space-drill ps -a",
+        "docker ps -a --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}'",
+        "docker ps -a --format '{{.Names}}\t{{.Image}}\t{{.Status}}'",
+        "APP_IMAGE=member-space-drill/app:0.2.0 APP_IMAGE_TAG=0.2.0 docker compose -f app-rollback-drill/drill/docker-compose.yml --env-file app-rollback-drill/.env --project-name member-space-drill config --format json",
+        "APP_IMAGE=member-space-drill/app:0.2.0 APP_IMAGE_TAG=0.2.0 docker compose -f app-rollback-drill/drill/docker-compose.yml --env-file app-rollback-drill/.env --project-name member-space-drill up -d --no-deps api",
+        "docker compose -f app-rollback-drill/drill/docker-compose.yml --env-file app-rollback-drill/.env --project-name member-space-drill ps -a",
+        "docker ps -a --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}'",
+        "docker ps -a --format '{{.Names}}\t{{.Image}}\t{{.Status}}'"
+      ]
+    },
+    {
+      "step": "report",
+      "title": "生成报告（JSON + Markdown）",
+      "started_at": "2026-11-24T01:16:31.350+08:00",
+      "ended_at": "2026-11-24T01:16:31.351+08:00",
+      "duration_seconds": 0.001,
+      "status": "ok",
+      "detail": "已写出 report.json 与 report.md -> app-rollback-drill/EVIDENCE/01_rollback_success",
+      "error": "",
+      "commands": [
+        "docker version --format '{{.Server.Version}}'",
+        "docker image inspect member-space-drill/app:1.0.0",
+        "docker image inspect member-space-drill/app:0.2.0",
+        "APP_IMAGE=member-space-drill/app:1.0.0 APP_IMAGE_TAG=1.0.0 docker compose -f app-rollback-drill/drill/docker-compose.yml --env-file app-rollback-drill/.env --project-name member-space-drill config -q",
+        "docker compose -f app-rollback-drill/drill/docker-compose.yml --env-file app-rollback-drill/.env --project-name member-space-drill ps -a",
+        "docker ps -a --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}'",
+        "docker ps -a --format '{{.Names}}\t{{.Image}}\t{{.Status}}'",
+        "APP_IMAGE=member-space-drill/app:0.2.0 APP_IMAGE_TAG=0.2.0 docker compose -f app-rollback-drill/drill/docker-compose.yml --env-file app-rollback-drill/.env --project-name member-space-drill config --format json",
+        "APP_IMAGE=member-space-drill/app:0.2.0 APP_IMAGE_TAG=0.2.0 docker compose -f app-rollback-drill/drill/docker-compose.yml --env-file app-rollback-drill/.env --project-name member-space-drill up -d --no-deps api",
+        "docker compose -f app-rollback-drill/drill/docker-compose.yml --env-file app-rollback-drill/.env --project-name member-space-drill ps -a",
+        "docker ps -a --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}'",
+        "docker ps -a --format '{{.Names}}\t{{.Image}}\t{{.Status}}'"
+      ]
+    }
+  ],
+  "health_check_attempts": [
+    {
+      "attempt": 1,
+      "at": "2026-11-24T01:16:28.974+08:00",
+      "http_status": 502,
+      "ok": false
+    },
+    {
+      "attempt": 2,
+      "at": "2026-11-24T01:16:31.002+08:00",
+      "http_status": 200,
+      "ok": true
+    }
+  ],
+  "docker_state": {
+    "before": {
+      "captured_at": "2026-11-24T01:16:27.891+08:00",
+      "compose_ps": "NAME                            IMAGE                                           COMMAND                  SERVICE    CREATED          STATUS                    PORTS\nmember-space-drill-api-1        member-space-drill/app:1.0.0                    \"sh -c 'exec uvicorn…\"   api        2 seconds ago    Up 1 second               8000/tcp\nmember-space-drill-nginx-1      docker.1panel.live/library/nginx:1.27-alpine    \"/docker-entrypoint.…\"   nginx      32 minutes ago   Up 32 minutes             80/tcp, 0.0.0.0:18080->8080/tcp, [::]:18080->8080/tcp\nmember-space-drill-postgres-1   docker.1panel.live/library/postgres:16-alpine   \"docker-entrypoint.s…\"   postgres   32 minutes ago   Up 32 minutes (healthy)   5432/tcp",
+      "docker_ps": "NAMES                           IMAGE                                           STATUS                      PORTS\nmember-space-drill-api-1        member-space-drill/app:1.0.0                    Up 1 second                 8000/tcp\nmember-space-drill-nginx-1      docker.1panel.live/library/nginx:1.27-alpine    Up 32 minutes               80/tcp, 0.0.0.0:18080->8080/tcp, [::]:18080->8080/tcp\nmember-space-drill-postgres-1   docker.1panel.live/library/postgres:16-alpine   Up 32 minutes (healthy)     5432/tcp\nother-project-pg-3                        docker.1panel.live/library/postgres:16-alpine   Up 34 minutes (healthy)     0.0.0.0:55433->5432/tcp, [::]:55433->5432/tcp\nother-project-svc-2                    ad10ca536106                                    Exited (1) 40 minutes ago   \nother-project-pg-1                       pgvector/pgvector:pg16                          Up 45 minutes (healthy)     0.0.0.0:55432->5432/tcp, [::]:55432->5432/tcp\nrollback-drill-api-1            member-space-api:v1                             Exited (0) 5 hours ago      \nrollback-drill-watchdog-1       python:3.12-slim                                Up 5 hours                  \nrollback-drill-redis-1          docker.1panel.live/library/redis:7-alpine       Up 5 hours (healthy)        6379/tcp\nrollback-drill-web-1            python:3.12-slim                                Up 5 hours (healthy)        0.0.0.0:18081->8080/tcp, [::]:18081->8080/tcp\nrollback-drill-db-1             pgvector/pgvector:pg16                          Up 5 hours (healthy)        5432/tcp\nother-project-pg-2                       pgvector/pgvector:pg16                          Exited (0) 5 hours ago      \nother-project-svc-1       de9bfd9b32f0                                    Exited (0) 3 days ago       \nother-project-db-1        pgvector/pgvector:pg16                          Exited (0) 5 hours ago",
+      "containers": "member-space-drill-api-1\tmember-space-drill/app:1.0.0\tUp 1 second\nmember-space-drill-nginx-1\tdocker.1panel.live/library/nginx:1.27-alpine\tUp 32 minutes\nmember-space-drill-postgres-1\tdocker.1panel.live/library/postgres:16-alpine\tUp 32 minutes (healthy)\nother-project-pg-3\tdocker.1panel.live/library/postgres:16-alpine\tUp 34 minutes (healthy)\nother-project-svc-2\tad10ca536106\tExited (1) 40 minutes ago\nother-project-pg-1\tpgvector/pgvector:pg16\tUp 45 minutes (healthy)\nrollback-drill-api-1\tmember-space-api:v1\tExited (0) 5 hours ago\nrollback-drill-watchdog-1\tpython:3.12-slim\tUp 5 hours\nrollback-drill-redis-1\tdocker.1panel.live/library/redis:7-alpine\tUp 5 hours (healthy)\nrollback-drill-web-1\tpython:3.12-slim\tUp 5 hours (healthy)\nrollback-drill-db-1\tpgvector/pgvector:pg16\tUp 5 hours (healthy)\nother-project-pg-2\tpgvector/pgvector:pg16\tExited (0) 5 hours ago\nother-project-svc-1\tde9bfd9b32f0\tExited (0) 3 days ago\nother-project-db-1\tpgvector/pgvector:pg16\tExited (0) 5 hours ago"
+    },
+    "after": {
+      "captured_at": "2026-11-24T01:16:31.347+08:00",
+      "compose_ps": "NAME                            IMAGE                                           COMMAND                  SERVICE    CREATED          STATUS                    PORTS\nmember-space-drill-api-1        member-space-drill/app:0.2.0                    \"sh -c 'exec uvicorn…\"   api        3 seconds ago    Up 2 seconds              8000/tcp\nmember-space-drill-nginx-1      docker.1panel.live/library/nginx:1.27-alpine    \"/docker-entrypoint.…\"   nginx      32 minutes ago   Up 32 minutes             80/tcp, 0.0.0.0:18080->8080/tcp, [::]:18080->8080/tcp\nmember-space-drill-postgres-1   docker.1panel.live/library/postgres:16-alpine   \"docker-entrypoint.s…\"   postgres   32 minutes ago   Up 32 minutes (healthy)   5432/tcp",
+      "docker_ps": "NAMES                           IMAGE                                           STATUS                      PORTS\nmember-space-drill-api-1        member-space-drill/app:0.2.0                    Up 2 seconds                8000/tcp\nmember-space-drill-nginx-1      docker.1panel.live/library/nginx:1.27-alpine    Up 32 minutes               80/tcp, 0.0.0.0:18080->8080/tcp, [::]:18080->8080/tcp\nmember-space-drill-postgres-1   docker.1panel.live/library/postgres:16-alpine   Up 32 minutes (healthy)     5432/tcp\nother-project-pg-3                        docker.1panel.live/library/postgres:16-alpine   Up 34 minutes (healthy)     0.0.0.0:55433->5432/tcp, [::]:55433->5432/tcp\nother-project-svc-2                    ad10ca536106                                    Exited (1) 40 minutes ago   \nother-project-pg-1                       pgvector/pgvector:pg16                          Up 45 minutes (healthy)     0.0.0.0:55432->5432/tcp, [::]:55432->5432/tcp\nrollback-drill-api-1            member-space-api:v1                             Exited (0) 5 hours ago      \nrollback-drill-watchdog-1       python:3.12-slim                                Up 5 hours                  \nrollback-drill-redis-1          docker.1panel.live/library/redis:7-alpine       Up 5 hours (healthy)        6379/tcp\nrollback-drill-web-1            python:3.12-slim                                Up 5 hours (healthy)        0.0.0.0:18081->8080/tcp, [::]:18081->8080/tcp\nrollback-drill-db-1             pgvector/pgvector:pg16                          Up 5 hours (healthy)        5432/tcp\nother-project-pg-2                       pgvector/pgvector:pg16                          Exited (0) 5 hours ago      \nother-project-svc-1       de9bfd9b32f0                                    Exited (0) 3 days ago       \nother-project-db-1        pgvector/pgvector:pg16                          Exited (0) 5 hours ago",
+      "containers": "member-space-drill-api-1\tmember-space-drill/app:0.2.0\tUp 2 seconds\nmember-space-drill-nginx-1\tdocker.1panel.live/library/nginx:1.27-alpine\tUp 32 minutes\nmember-space-drill-postgres-1\tdocker.1panel.live/library/postgres:16-alpine\tUp 32 minutes (healthy)\nother-project-pg-3\tdocker.1panel.live/library/postgres:16-alpine\tUp 34 minutes (healthy)\nother-project-svc-2\tad10ca536106\tExited (1) 40 minutes ago\nother-project-pg-1\tpgvector/pgvector:pg16\tUp 45 minutes (healthy)\nrollback-drill-api-1\tmember-space-api:v1\tExited (0) 5 hours ago\nrollback-drill-watchdog-1\tpython:3.12-slim\tUp 5 hours\nrollback-drill-redis-1\tdocker.1panel.live/library/redis:7-alpine\tUp 5 hours (healthy)\nrollback-drill-web-1\tpython:3.12-slim\tUp 5 hours (healthy)\nrollback-drill-db-1\tpgvector/pgvector:pg16\tUp 5 hours (healthy)\nother-project-pg-2\tpgvector/pgvector:pg16\tExited (0) 5 hours ago\nother-project-svc-1\tde9bfd9b32f0\tExited (0) 3 days ago\nother-project-db-1\tpgvector/pgvector:pg16\tExited (0) 5 hours ago"
+    }
+  },
+  "commands": [
+    {
+      "command": "docker version --format '{{.Server.Version}}'",
+      "returncode": 0,
+      "duration_seconds": 0.035
+    },
+    {
+      "command": "docker image inspect member-space-drill/app:1.0.0",
+      "returncode": 0,
+      "duration_seconds": 0.055
+    },
+    {
+      "command": "docker image inspect member-space-drill/app:0.2.0",
+      "returncode": 0,
+      "duration_seconds": 0.053
+    },
+    {
+      "command": "APP_IMAGE=member-space-drill/app:1.0.0 APP_IMAGE_TAG=1.0.0 docker compose -f app-rollback-drill/drill/docker-compose.yml --env-file app-rollback-drill/.env --project-name member-space-drill config -q",
+      "returncode": 0,
+      "duration_seconds": 0.116
+    },
+    {
+      "command": "docker compose -f app-rollback-drill/drill/docker-compose.yml --env-file app-rollback-drill/.env --project-name member-space-drill ps -a",
+      "returncode": 0,
+      "duration_seconds": 0.135
+    },
+    {
+      "command": "docker ps -a --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}'",
+      "returncode": 0,
+      "duration_seconds": 0.112
+    },
+    {
+      "command": "docker ps -a --format '{{.Names}}\t{{.Image}}\t{{.Status}}'",
+      "returncode": 0,
+      "duration_seconds": 0.109
+    },
+    {
+      "command": "APP_IMAGE=member-space-drill/app:0.2.0 APP_IMAGE_TAG=0.2.0 docker compose -f app-rollback-drill/drill/docker-compose.yml --env-file app-rollback-drill/.env --project-name member-space-drill config --format json",
+      "returncode": 0,
+      "duration_seconds": 0.1
+    },
+    {
+      "command": "APP_IMAGE=member-space-drill/app:0.2.0 APP_IMAGE_TAG=0.2.0 docker compose -f app-rollback-drill/drill/docker-compose.yml --env-file app-rollback-drill/.env --project-name member-space-drill up -d --no-deps api",
+      "returncode": 0,
+      "duration_seconds": 0.969
+    },
+    {
+      "command": "docker compose -f app-rollback-drill/drill/docker-compose.yml --env-file app-rollback-drill/.env --project-name member-space-drill ps -a",
+      "returncode": 0,
+      "duration_seconds": 0.131
+    },
+    {
+      "command": "docker ps -a --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}'",
+      "returncode": 0,
+      "duration_seconds": 0.106
+    },
+    {
+      "command": "docker ps -a --format '{{.Names}}\t{{.Image}}\t{{.Status}}'",
+      "returncode": 0,
+      "duration_seconds": 0.104
+    }
+  ]
+}

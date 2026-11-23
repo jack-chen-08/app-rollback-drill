@@ -1,0 +1,44 @@
+[01:16:59] 回滚演练开始 mode=dry-run project=member-space-drill tag=1.0.0 -> 0.2.0
+[01:16:59] ==> [preflight] 预检（环境变量 / 镜像标签 / compose 解析）
+[dry-run] 将要执行: docker version --format '{{.Server.Version}}'
+[dry-run] 将要执行: docker image inspect member-space-drill/app:1.0.0
+[dry-run] 将要执行: docker image inspect member-space-drill/app:0.2.0
+[dry-run] 将要执行: APP_IMAGE=member-space-drill/app:1.0.0 APP_IMAGE_TAG=1.0.0 docker compose -f app-rollback-drill/drill/docker-compose.yml --env-file app-rollback-drill/.env --project-name member-space-drill config -q
+    [dry-run] 步骤已规划，未执行（不影响容器）
+[01:16:59] <== [preflight] status=planned duration=0.00s
+[01:16:59] ==> [snapshot_before] 记录回滚前状态（docker ps / compose ps / version）
+[dry-run] 将要执行: docker compose -f app-rollback-drill/drill/docker-compose.yml --env-file app-rollback-drill/.env --project-name member-space-drill ps -a
+[dry-run] 将要执行: docker ps -a --format 'table {{.Names}}	{{.Image}}	{{.Status}}	{{.Ports}}'
+[dry-run] 将要执行: docker ps -a --format '{{.Names}}	{{.Image}}	{{.Status}}'
+    [dry-run] 将读取 http://127.0.0.1:18080/version 作为回滚前版本，并落盘 docker ps / compose ps 快照
+    [dry-run] 步骤已规划，未执行（不影响容器）
+[01:16:59] <== [snapshot_before] status=planned duration=0.00s
+[01:16:59] ==> [switch_version] 切镜像版本（渲染并校验目标镜像引用）
+[dry-run] 将要执行: APP_IMAGE=member-space-drill/app:0.2.0 APP_IMAGE_TAG=0.2.0 docker compose -f app-rollback-drill/drill/docker-compose.yml --env-file app-rollback-drill/.env --project-name member-space-drill config --format json
+    [dry-run] 步骤已规划，未执行（不影响容器）
+[01:16:59] <== [switch_version] status=planned duration=0.00s
+[01:16:59] ==> [compose_up] 应用变更（docker compose up -d）
+[dry-run] 将要执行: APP_IMAGE=member-space-drill/app:0.2.0 APP_IMAGE_TAG=0.2.0 docker compose -f app-rollback-drill/drill/docker-compose.yml --env-file app-rollback-drill/.env --project-name member-space-drill up -d --no-deps api
+    [dry-run] 步骤已规划，未执行（不影响容器）
+[01:16:59] <== [compose_up] status=planned duration=0.00s
+[01:16:59] ==> [health_check] 健康检查轮询（/health）
+    [dry-run] 将轮询 http://127.0.0.1:18080/health，超时 60s，间隔 2.0s
+    [dry-run] 步骤已规划，未执行（不影响容器）
+[01:16:59] <== [health_check] status=planned duration=0.00s
+[01:16:59] ==> [verify_version] 校验版本（/version 应为回滚目标）
+    [dry-run] 将校验 http://127.0.0.1:18080/version 的 image_version == 0.2.0
+    [dry-run] 步骤已规划，未执行（不影响容器）
+[01:16:59] <== [verify_version] status=planned duration=0.00s
+[01:16:59] ==> [snapshot_after] 记录回滚后状态（docker ps / compose ps / version）
+[dry-run] 将要执行: docker compose -f app-rollback-drill/drill/docker-compose.yml --env-file app-rollback-drill/.env --project-name member-space-drill ps -a
+[dry-run] 将要执行: docker ps -a --format 'table {{.Names}}	{{.Image}}	{{.Status}}	{{.Ports}}'
+[dry-run] 将要执行: docker ps -a --format '{{.Names}}	{{.Image}}	{{.Status}}'
+    [dry-run] 将再次采集 docker ps / compose ps / version
+    [dry-run] 步骤已规划，未执行（不影响容器）
+[01:16:59] <== [snapshot_after] status=planned duration=0.00s
+[01:16:59] ==> [report] 生成报告（JSON + Markdown）
+    [ok] 已写出 report.json 与 report.md -> app-rollback-drill/EVIDENCE/03_dry_run
+[01:16:59] <== [report] status=ok duration=0.00s
+
+DRY-RUN 完成：12 条命令已打印，未执行任何一条，容器状态未变
+报告：app-rollback-drill/EVIDENCE/03_dry_run/report.md

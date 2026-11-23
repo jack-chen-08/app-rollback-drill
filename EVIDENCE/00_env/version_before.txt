@@ -1,0 +1,1 @@
+{"service":"member-space-api","image_version":"1.0.0","runtime_label":"drill-a","health_path":"/health"}

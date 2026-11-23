@@ -1,0 +1,36 @@
+[01:16:27] 回滚演练开始 mode=real project=member-space-drill tag=1.0.0 -> 0.2.0
+[01:16:27] ==> [preflight] 预检（环境变量 / 镜像标签 / compose 解析）
+    [ok] 环境变量齐备；镜像 member-space-drill/app:1.0.0 与 member-space-drill/app:0.2.0 均存在；compose 解析通过；故障注入=未启用
+[01:16:27] <== [preflight] status=ok duration=0.26s
+[01:16:27] ==> [snapshot_before] 记录回滚前状态（docker ps / compose ps / version）
+    [ok] 回滚前版本 image_version=1.0.0 runtime_label=drill-a；主机可见容器 14 个
+[01:16:27] <== [snapshot_before] status=ok duration=0.37s
+[01:16:27] ==> [switch_version] 切镜像版本（渲染并校验目标镜像引用）
+    [ok] 目标镜像引用已确认为 member-space-drill/app:0.2.0
+[01:16:28] <== [switch_version] status=ok duration=0.10s
+[01:16:28] ==> [compose_up] 应用变更（docker compose up -d）
+$ APP_IMAGE=member-space-drill/app:0.2.0 APP_IMAGE_TAG=0.2.0 docker compose -f app-rollback-drill/drill/docker-compose.yml --env-file app-rollback-drill/.env --project-name member-space-drill up -d --no-deps api
+    [ok] 已应用镜像 0.2.0，容器动作: Container member-space-drill-api-1  Recreate; Container member-space-drill-api-1  Recreated; Container member-space-drill-api-1  Starting; Container member-space-drill-api-1  Started
+[01:16:28] <== [compose_up] status=ok duration=0.97s
+[01:16:28] ==> [health_check] 健康检查轮询（/health）
+    #尝试 1: HTTP 502 <html>
+ <head><title>502 Bad Gateway</title></head>
+ <body>
+ <center><h1>502 Bad Gateway</h1></center>
+ <hr><center>nginx/1.27.5</center>
+ </body>
+ </html>
+    #尝试 2: HTTP 200 {"status":"ok","detail":"database reachable","version":"0.2.0"}
+    [ok] 健康检查通过，共轮询 2 次
+[01:16:31] <== [health_check] status=ok duration=2.03s
+[01:16:31] ==> [verify_version] 校验版本（/version 应为回滚目标）
+    [ok] 版本已由 1.0.0 变为 0.2.0，回滚生效
+[01:16:31] <== [verify_version] status=ok duration=0.00s
+[01:16:31] ==> [snapshot_after] 记录回滚后状态（docker ps / compose ps / version）
+    [ok] 已记录回滚后状态；主机可见容器 14 个
+[01:16:31] <== [snapshot_after] status=ok duration=0.34s
+[01:16:31] ==> [report] 生成报告（JSON + Markdown）
+    [ok] 已写出 report.json 与 report.md -> app-rollback-drill/EVIDENCE/01_rollback_success
+[01:16:31] <== [report] status=ok duration=0.00s
+
+演练成功：回滚总耗时 4.07 秒（SLA 900 秒）；报告 -> app-rollback-drill/EVIDENCE/01_rollback_success/report.md
